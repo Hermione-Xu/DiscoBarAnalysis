@@ -1,27 +1,60 @@
-function [videoB, videoV, Bfi, Vfi] = SplitVideoDouble_XHX(ops)
+function [videoB, videoV, Bfi, Vfi] = SplitVideoDouble_XHX_PG(vfiles,refimg,nFrames)
 %% Created by Hemanth Mohan, modified by Hermione Xu.
 %%
-vfile_1 = ops.vfile_1;
-vfile_2 = ops.vfile_2;
 
-pos = ops.pos;
+if nargin<3
+    nFrames = [];
+end
 
-refimg = ops.refimg;
-tiff_info_1 = imfinfo(vfile_1);
-tiff_info_2 = imfinfo(vfile_2);
+vfile_1 = vfiles{1}; % first stack
+totalframes = nFrames;
+if size(vfiles,2) > 1
+    vfile_2 = vfiles{2}; % second stack, if processing in groups of two
+    totalframes = totalframes + nFrames;
+else
+    vfile_2 = [];
+end
 
-totalframes = size(tiff_info_1,1) + size(tiff_info_2,1);
-videoB=zeros(size(refimg,1),size(refimg,2),ceil(totalframes/2));
-videoV=zeros(size(refimg,1),size(refimg,2),floor(totalframes/2));
-Bfi = zeros(1,ceil(totalframes/2));
-Vfi = zeros(1,floor(totalframes/2));
+%pos = ops.pos;
+valid_indices
 
-% videoB_2=zeros(size(refimg,1),size(refimg,2),ceil(size(tiff_info_2,1)/2));
-% videoV_2=zeros(size(refimg,1),size(refimg,2),floor(size(tiff_info_2,1)/2));
-% Bfi_2 = zeros(1,ceil(size(tiff_info_2,1)/2));
-% Vfi_2 = zeros(1,floor(size(tiff_info_2,1)/2));
+
+% tiff_info_1 = imfinfo(vfile_1);
+% tiff_info_2 = imfinfo(vfile_2);
+
+%totalframes = size(tiff_info_1,1) + size(tiff_info_2,1);
+
+% initialize cropped stacks for each channel
+BlueFrames = ceil(totalframes/2);
+VioletFrames = floor(totalframes/2); % blue is saved first - so if there are odd number of frames - it will always be more blue than violet
+videoB = zeros(size(refimg,1),size(refimg,2),BlueFrames); 
+videoV = zeros(size(refimg,1),size(refimg,2),VioletFrames);
+
+Bfi = zeros(1,BlueFrames);
+Vfi = zeros(1,VioletFrames);
 
 tic
+% read the stack
+stackdone = 0; frames_read = 0;
+while ~stackdone
+    try 
+        myframe = imread(vfile_1,frames_read+1);
+    catch
+        myframe = [];
+    end
+    if ~isempty(myframe)
+        frames_read = frames_read + 1;
+        if rem(frames_read,2) == 1 % violet frame
+            videoB(:,:,(fi+1)/2)=imread(vfile_1,fi);
+        else
+            
+        end
+    end
+    if rem(frames_read,2) == 0 % violet frame
+    else
+    end
+end
+
 %% First video 1 (didn't do parfor because couldn't find a good solution to
 % the "slicing" indexing issue.
 for fi = 1:size(tiff_info_1,1) % fi is the frame index

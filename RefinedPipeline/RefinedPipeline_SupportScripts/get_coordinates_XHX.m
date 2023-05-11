@@ -12,8 +12,9 @@ if exist(fullfile(ops.fpath,coorfile), 'file')
     ops.refimg = vertcat(refimg.maskedImage);
     disp('Loading PreExisting Coordinate Location for cropping!!')
 else
-    refimg = imread(ops.vfile_1,1);
-
+    %refimg = imread(ops.vfile_1,1);
+    refimg = imread(fullfile(ops.fpath, ops.fname));
+    
     subplot(2,2,1);
     imshow(refimg);
     axis('on','image');
@@ -70,6 +71,7 @@ else
     if coorsave == 1
         ops.pos = pos;
         ops.refimg = maskedImage;
+        ops.ROI = mask;
         save(fullfile(ops.fpath,coorfile), 'pos');
         save(fullfile(ops.fpath,[coorfile(1:end-8) 'refimg']),'maskedImage');
     end

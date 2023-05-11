@@ -11,12 +11,6 @@ ops.baselineFrames = 60; % How do we decide on the baseline? For now, make it th
 ops.blockDims = 25; %number of dimensions from SVD per block
 ops.dimCnt = 200; % number of components in the final dataset
 ops.frameRate = 30; % Frame rate of individual channels
-% Make sure the square root of the chosen block number is an integer
-if ops.blocknum ~= floor(sqrt(ops.blocknum))^2
-    fprintf('Chosen blocknum (%d) cannot be squared. Using %d instead.\n', ...
-        ops.blocknum,floor(sqrt(ops.blocknum))^2)
-    ops.blocknum = floor(sqrt(ops.blocknum))^2;
-end
 
 if isempty(gcp('nocreate')) == 1
     parpool('local',8); % Start parallel pool (parpool)
@@ -24,13 +18,13 @@ end
 
 % select one imaging file and then get all other .tif files in the folder
 [ops.fname, ops.fpath] = uigetfile('*@*.tif');
-listing_tif = dir([ops.fpath,filesep,'*@*.tif']);
+listing_tif = dir([ops.fpath,filesep,'*.tif']);
 %fname_tif_all = natsortfiles({listing_tif.name}');
 fname_tif_all = arrayfun(@(x) x.name, listing_tif, 'UniformOutput', false); % no need for natsortfiles
 
 % get general attributes of each stack
 stack_params = imfinfo(fullfile(ops.fpath,ops.fname));
-ops.frames_per_stack = size(stack_params,1);
+frames_per_stack = size(stack_params,1);
 
 % crop the images to keep only the useful parts
 ops = get_coordinates_XHX(ops);
@@ -38,32 +32,27 @@ ops = get_coordinates_XHX(ops);
 % each stack has alternating frames from 2 chans - 405 and 470 nm
 % a stack can have an odd number of frames - which leads to unequal frames
 % for the 2 channels - to avoid this - always process two stacks at a time 
-nStacks = length(fname_tif_all);
+nStacks = length(fname_tif_all)/2);
+isOdd = rem(length(fname_tif_all),2);
 
 timestamps_legend = ['Frame Number', 'Date (yyyymmdd)', 'Time (hhmmssxxxxxx'];
-timestamps = zeros(ops.frames_per_stack*2, 3, ceil(size(fname_tif_all,1)/2));
+timestamps = zeros(frames_per_stack*2, 3, ceil(size(fname_tif_all,1)/2));
 
 %%
-fidx_1 = -1; % file index
-fidx_2 = 0;
-iCount = 0;
+    fidx_1 = -1; % file index
+    fidx_2 = 0;
+    iCount = 0;
     
-%% perform dff of the initial files
-for ii = 2:2:nStacks % process in groups of 2
+    %% perform dff of the initial files
+    for ii = 1:HalfStacks
         
-    % Update file names
-    %ops.vfile_1 = fullfile(ops.fpath,fname_tif_all{ii-1});
-    %ops.vfile_2 = fullfile(ops.fpath,fname_tif_all{ii});
-    
-    ops.vfile{1} = fullfile(ops.fpath,fname_tif_all{ii-1});
-    ops.vfile{2} = fullfile(ops.fpath,fname_tif_all{ii});
-    % blockSVD function splits channels, extracts timestamps
-    % does motion correction, df/f,
-    % and block SVD (separates the imaging frames into smaller blocks
-    % and performs linear dimensionality using randomized SVD. This
-    % step returns block-wise data 'bV' and 'bU'
-    
-    [bV, bU, blockInd, bAvg, vAvg] = blockSVD_XHX(ops);
+        %% Update file names      
+        fidx_1 = fidx_1+2;
+        fidx_2 = fidx_2+2;
+        cur_fname_1 = fname_tif_all{fidx_1};
+        ops.vfile_1 = fullfile(ops.fpath,cur_fname_1);
+        cur_fname_2 = fname_tif_all{fidx_2};
+        ops.vfile_2 = fullfile(ops.fpath,cur_fname_2);
         
         %% Extract time stamp
         disp('Extracting time stamps...')
@@ -74,7 +63,11 @@ for ii = 2:2:nStacks % process in groups of 2
         % clearvars temp_stamp
         toc
 
-
+        % blockSVD function splits channels, does motion correction, df/f,
+        % and block SVD (separates the imaging frames into smaller blocks 
+        % and performs linear dimensionality using randomized SVD. This
+        % step returns block-wise data 'bV' and 'bU'
+        [bV, bU, blockInd, bAvg, vAvg] = blockSVD_XHX(ops);
 
         %% Create whole-frame components
         % merge dimensions if bV is in dims x trials x frames format

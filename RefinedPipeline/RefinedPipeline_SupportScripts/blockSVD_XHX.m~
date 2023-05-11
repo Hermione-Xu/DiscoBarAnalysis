@@ -16,8 +16,7 @@ disp(ops.fpath)
 disp('Extracting videos and splitting channels...')
 
 % Bfi and Vfi are frame indices of blue and violet frames
-[videoB, videoV, Bfi, Vfi] = SplitVideoDouble_XHX_PG(ops.vfile,ops.refimg,nFrames); 
-
+[videoB, videoV, Bfi, Vfi] = SplitVideoDouble_XHX_PG(ops.vfile,ops.refimg, ); 
 [videoB, videoV, Bfi, Vfi] = SplitVideoDouble_XHX(ops); 
 VidSzB = size(videoB);
 VidSzV = size(videoV);
