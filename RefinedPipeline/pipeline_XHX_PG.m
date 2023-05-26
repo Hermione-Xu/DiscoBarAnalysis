@@ -13,7 +13,7 @@ ops = get_coordinates_XHX(ops);
 MyTraces = []; TimeStamps = [];
 for i = 1:nStacks
     tsStack = TIFFStack(fullfile(ops.fpath,fname_tif_all{i}));
-    TimeStamps = 
+    %TimeStamps = 
     %MyTraces = MyTraces()
     
 end

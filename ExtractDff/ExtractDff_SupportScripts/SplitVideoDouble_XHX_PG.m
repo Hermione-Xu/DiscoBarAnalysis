@@ -16,6 +16,7 @@ else
 end
 
 %pos = ops.pos;
+valid_indices
 
 
 % tiff_info_1 = imfinfo(vfile_1);
@@ -36,8 +37,19 @@ tic
 % read the stack
 stackdone = 0; frames_read = 0;
 while ~stackdone
-    myframe = imread(vfile_1,frames_read+1);
-    
+    try 
+        myframe = imread(vfile_1,frames_read+1);
+    catch
+        myframe = [];
+    end
+    if ~isempty(myframe)
+        frames_read = frames_read + 1;
+        if rem(frames_read,2) == 1 % violet frame
+            videoB(:,:,(fi+1)/2)=imread(vfile_1,fi);
+        else
+            
+        end
+    end
     if rem(frames_read,2) == 0 % violet frame
     else
     end
