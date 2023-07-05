@@ -96,7 +96,7 @@ fclose(Vfid);
 % fclose(Vfid_ts);
 
 % save some settings 
-TS.settings = [size(tsStack) BinBy nBlue nViolet];
+TS.settings = [size(tsStack,1) size(tsStack,2) BinBy nBlue nViolet];
 save(fullfile(BinaryPath,'params.mat'),'TS');
 
 % change permissions
