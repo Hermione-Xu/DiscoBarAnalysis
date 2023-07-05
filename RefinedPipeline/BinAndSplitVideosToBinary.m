@@ -1,24 +1,34 @@
+function [] = BinAndSplitVideosToBinary(TiffPath,BinaryPath,BinBy)
+
+if nargin < 3
+    % for binning - BinFactor
+    BinBy = 4;
+end
+    
 % data paths for the raw tiffs
-TiffPath = '/mnt/storage/Widefield/HX3/20230406_r0';
+%TiffPath = '/mnt/storage/Widefield/HX3/20230406_r0';
+%TiffPath = '/mnt/albeanu_lab/priyanka/Widefield/HX3/20230505_r0';
 listing_tif = dir(fullfile(TiffPath,'*.tif'));
 fname_tif_all = arrayfun(@(x) x.name, listing_tif, 'UniformOutput', false); % no need for natsortfiles
 nStacks = length(fname_tif_all);
 
-% for binning - BinFactor
-BinBy = 4;
+if ~exist(BinaryPath)
+    mkdir(BinaryPath);
+end
 
 % paths for saving the binary files
-BinaryPath  = regexprep(TiffPath,'storage','data');
+%BinaryPath  = regexprep(TiffPath,'storage','data');
+%BinaryPath  = '/mnt/data/Widefield/HX3/20230505_r0';
 BlueDat     = fullfile(BinaryPath,'470_frames.dat');
 VioletDat   = fullfile(BinaryPath,'407_frames.dat');
 Bfid        = fopen(BlueDat, 'w');
 Vfid        = fopen(VioletDat, 'w');
 
 % for saving frame timestamps
-BlueTS      = fullfile(BinaryPath,'470_timestamps.dat');
-VioletTS    = fullfile(BinaryPath,'407_timestamps.dat');
-Bfid_ts     = fopen(BlueTS, 'w');
-Vfid_ts     = fopen(VioletTS, 'w');
+TS.Blue     = zeros(ceil(nStacks*3097/2),2);
+TS.Violet   = zeros(ceil(nStacks*3097/2),2);
+nBlue       = 0;
+nViolet     = 0;
 
 % variable initializations
 TimeStamps = [];
@@ -38,9 +48,9 @@ for i = 1:nStacks % for every raw tiff stack
     tic % 16.7 3.9
     clear tsStack t TimeStamps thisFN thisTS BinnedStack blue_indices violet_indices
     tsStack = loadTiffStack(thisFile, 'tiffobj', extraverbose);
-    toc
+    %toc
     
-    tic % 0.03 0.01
+    %tic % 0.03 0.01
     % get timestamps
     TimeStamps = squeeze(tsStack(1,1:14,:));
     [thisFN, thisTS] = timeFromPCOBinaryMulti(TimeStamps); % [frame_numbers frame_timestamps]
@@ -50,12 +60,12 @@ for i = 1:nStacks % for every raw tiff stack
     end
     %toc
     
-    %tic % 6.83
+%     %tic % 6.83
     BinnedStack = zeros(size(tsStack,1)/BinBy, size(tsStack,2)/BinBy, size(tsStack,3));
     for f = 1:size(tsStack,3)
         BinnedStack(:,:,f) = binImage_ns(squeeze(tsStack(:,:,f)),BinBy);
     end
-    %toc
+%     %toc
     
     if mod(thisFN(1),2) % first frame is a blue Frame
         blue_indices = 1:2:size(tsStack,3);
@@ -65,27 +75,32 @@ for i = 1:nStacks % for every raw tiff stack
         violet_indices = 1:2:size(tsStack,3);
     end
     
-    %tic % 0.15
+    TS.Blue(nBlue+(1:numel(blue_indices)),:)        = [thisFN(blue_indices)'    thisTS(blue_indices)'-firstTS   ];
+    TS.Violet(nViolet+(1:numel(violet_indices)),:)  = [thisFN(violet_indices)'  thisTS(violet_indices)'-firstTS ];
+    
+    nBlue   = nBlue   + numel(blue_indices);
+    nViolet = nViolet + numel(violet_indices);
+    
+%     %tic % 0.15
     % write frames
     fwrite(Bfid, uint16(BinnedStack(:,:,blue_indices)), 'uint16');
     fwrite(Vfid, uint16(BinnedStack(:,:,violet_indices)), 'uint16');
-    %toc
-    
-    %tic % 0.001
-    % write the timestamps
-    fwrite(Bfid_ts, [thisFN(blue_indices)' ...
-                        thisTS(blue_indices)' ...
-                        thisTS(blue_indices)'-firstTS ...
-                        i*ones(numel(blue_indices),1) ], 'double');
-    fwrite(Vfid_ts, [thisFN(violet_indices)' ...
-                        thisTS(violet_indices)' ...
-                        thisTS(violet_indices)'-firstTS ...
-                        i*ones(numel(violet_indices),1) ], 'double');
-    toc
-        
+%     %toc
+
+toc
 end
 
 fclose(Bfid);
 fclose(Vfid);
-fclose(Bfid_ts);
-fclose(Bfid_ts);
+% fclose(Bfid_ts);
+% fclose(Vfid_ts);
+
+% save some settings 
+TS.settings = [size(tsStack) BinBy nBlue nViolet];
+save(fullfile(BinaryPath,'params.mat'),'TS');
+
+% change permissions
+command = ['chmod -R 777 ',BinaryPath];
+system(command);
+
+end
