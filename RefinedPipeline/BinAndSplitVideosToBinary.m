@@ -63,7 +63,7 @@ for i = 1:nStacks % for every raw tiff stack
 %     %tic % 6.83
     BinnedStack = zeros(size(tsStack,1)/BinBy, size(tsStack,2)/BinBy, size(tsStack,3));
     for f = 1:size(tsStack,3)
-        BinnedStack(:,:,f) = binImage_ns(squeeze(tsStack(:,:,f)),BinBy);
+        BinnedStack(:,:,f) = BinImage2Dconv(squeeze(tsStack(:,:,f)),BinBy);
     end
 %     %toc
     
