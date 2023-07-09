@@ -57,6 +57,7 @@ for i = 1:nStacks % for every raw tiff stack
     thisTS = thisTS*24*3600; % convert to seconds from days
     if i == 1
         firstTS = thisTS(1); % to get relative timestamps
+        TS.settings(1:2) = [size(tsStack,1) size(tsStack,2)]; % BinBy nBlue nViolet];
     end
     %toc
     
@@ -96,7 +97,7 @@ fclose(Vfid);
 % fclose(Vfid_ts);
 
 % save some settings 
-TS.settings = [size(tsStack,1) size(tsStack,2) BinBy nBlue nViolet];
+TS.settings(3:5) = [BinBy nBlue nViolet];
 save(fullfile(BinaryPath,'params.mat'),'TS');
 
 % change permissions
