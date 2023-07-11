@@ -48,11 +48,11 @@ end
 nPix = stackdims(1)*stackdims(2);
 ch_470_lin = reshape(ch_470,nPix,stackdims(3))';
 for i = 1:length(WhichROIs)
-%     refPix(:,i) = squeeze(ch_470(WhichROIs(i,1),WhichROIs(i,2),:));
-%     for j = 1:nPix
-%         R = corrcoef(ch_470_lin(:,j),refPix(:,i));
-%         C(j,i) = R(1,2);
-%     end
+    refPix(:,i) = squeeze(ch_470(WhichROIs(i,1),WhichROIs(i,2),:));
+    for j = 1:nPix
+        R = corrcoef(ch_470_lin(:,j),refPix(:,i));
+        C(j,i) = R(1,2);
+    end
     subplot(4,5,i);
     imagesc(reshape(C(:,i),stackdims(1),stackdims(2)));
     colormap(brewermap([],'*RdBu'));
